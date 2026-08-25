@@ -19,14 +19,22 @@ from dotenv import load_dotenv
 # hard-coded secrets or placeholders.
 load_dotenv()
 
-# Base URL for the Morrison Securities Data Access API.
+# Base URL for the Morrison Securities Data Access API host.
 #
 # Override with the ``MORRISON_API_BASE_URL`` environment variable when
 # targeting a non-default host (e.g. a staging or regional endpoint).
+# This should be the domain root only; the API path is defined separately
+# in ``ENDPOINT_PATH``.
 BASE_URL: str = os.getenv(
     "MORRISON_API_BASE_URL",
-    "https://api.morrisonsecurities.com/backoffice/dataaccess/v1",
-)
+    "https://api.morrisonsecurities.com/backoffice",
+).rstrip("/")
+
+# API endpoint path appended to ``BASE_URL``.
+ENDPOINT_PATH: str = "/dataaccess/v1"
+
+# Full request URL composed from host and endpoint path.
+API_URL: str = BASE_URL + ENDPOINT_PATH
 
 # Default request headers sent with every API call.
 #
@@ -72,7 +80,7 @@ def fetch_data() -> Dict[str, Any]:
     if not HEADERS["x-api-key"]:
         raise RuntimeError("MORRISON_ACCESS_KEY is missing. Check your .env file.")
 
-    url = BASE_URL
+    url = API_URL
     request = Request(url, headers=HEADERS, method="GET")
 
     try:
@@ -107,4 +115,7 @@ def fetch_data() -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    print(fetch_data())
+    import json as _json
+
+    data = fetch_data()
+    print(_json.dumps(data, indent=2, ensure_ascii=False))
