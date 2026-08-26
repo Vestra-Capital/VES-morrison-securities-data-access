@@ -12,8 +12,12 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from dotenv import load_dotenv
-
 from configuration import BASE_URL, HEADERS, _raise_for_status
+
+# Account Number for testing
+ACCOUNT_NUMBER: str = "115047"
+INCLUDE_CASHBALANCE: bool = True
+INCLUDE_POSITION_SUMMARY: bool = True
 
 # Load environment variables from ``.env`` in the project root.
 load_dotenv()
@@ -40,6 +44,16 @@ def fetch_trading_account_detail() -> Dict[str, Any]:
         raise RuntimeError("MORRISON_ACCESS_KEY is missing. Check your .env file.")
 
     url = API_URL
+    params: Dict[str, Any] = {}
+    params["accountNumber"] = ACCOUNT_NUMBER
+    params["includeCashbalance"] = "true" if INCLUDE_CASHBALANCE else "false"
+    params["includePositionSummary"] = "true" if INCLUDE_POSITION_SUMMARY else "false"
+
+    query_string = "&".join(f"{k}={v}" for k, v in params.items())
+    url = f"{API_URL}?{query_string}"
+
+    print(f"Requesting: {url}")
+
     request = Request(url, headers=HEADERS, method="GET")
 
     try:

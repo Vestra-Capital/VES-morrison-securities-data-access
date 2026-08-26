@@ -66,7 +66,7 @@ def _raise_for_status(error: HTTPError) -> NoReturn:
     ) from error
 
 
-def fetch_data() -> Dict[str, Any]:
+def fetch_data() -> Any:
     """Fetch data from the Morrison Securities Data Access API.
 
     Returns:

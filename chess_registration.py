@@ -1,8 +1,8 @@
-"""HTTP client for the Morrison Securities Trading Accounts API.
+"""HTTP client for the Morrison Securities Chess Registration Details API.
 
 Imports the shared base configuration from ``configuration`` and exposes a
-``fetch_trading_accounts()`` helper that performs a GET request against the
-``tradingaccounts/v2`` endpoint.  The module is intentionally side-effect-free
+``fetch_chess_registration_details()`` helper that performs a GET request against the
+``chessregistrationdetails/v1`` endpoint.  The module is intentionally side-effect-free
 on import, so it can be safely reused by tests or other Python modules.
 """
 
@@ -23,15 +23,15 @@ from configuration import (
 # Load environment variables from ``.env`` in the project root.
 load_dotenv()
 
-# API endpoint path for trading accounts.
-ENDPOINT_PATH: str = "/tradingaccounts/v2"
+# API endpoint path for chess registration details.
+ENDPOINT_PATH: str = "/chessregistrationdetails/v1"
 
 # Full request URL composed from shared base host and endpoint path.
 API_URL: str = BASE_URL + ENDPOINT_PATH
 
 
 def _build_url(scope_item: Dict[str, Any]) -> str:
-    """Build the trading accounts API URL from a scoping item."""
+    """Build the chess registration details API URL from a scoping item."""
     url = API_URL
     params: Dict[str, Any] = {}
     if scope_item.get("organisationCode"):
@@ -42,8 +42,6 @@ def _build_url(scope_item: Dict[str, Any]) -> str:
         params["adviserCode"] = scope_item["adviserCode"]
     if scope_item.get("accountNumber"):
         params["accountNumber"] = scope_item["accountNumber"]
-    if "includeInactive" in scope_item:
-        params["includeInactive"] = "true" if scope_item["includeInactive"] else "false"
 
     if params:
         query_string = "&".join(f"{k}={v}" for k, v in params.items())
@@ -52,13 +50,13 @@ def _build_url(scope_item: Dict[str, Any]) -> str:
     return url
 
 
-def fetch_trading_accounts(scope_item: Dict[str, Any]) -> Dict[str, Any]:
-    """Fetch trading accounts from the Morrison Securities API.
+def fetch_chess_registration_details(scope_item: Dict[str, Any]) -> Dict[str, Any]:
+    """Fetch chess registration details from the Morrison Securities API.
 
     Args:
         scope_item: Dictionary containing scoping parameters such as
             ``organisationCode``, ``branchCode``, ``adviserCode``,
-            ``accountNumber``, and ``includeInactive``.
+            and ``accountNumber``.
 
     Returns:
         Parsed JSON response as a dictionary.
@@ -129,10 +127,6 @@ if __name__ == "__main__":
         if adviser_code:
             seen_adviser_codes.add(adviser_code)
 
-        for include_inactive in (True, False):
-            call_item = dict(item)
-            call_item["includeInactive"] = include_inactive
-
-            data = fetch_trading_accounts(call_item)
-            print(f"\n--- Result for adviserCode={adviser_code or 'N/A'} includeInactive={include_inactive} ---")
-            print(_json.dumps(data, indent=2, ensure_ascii=False))
+        data = fetch_chess_registration_details(item)
+        print(f"\n--- Result for adviserCode={adviser_code or 'N/A'} ---")
+        print(_json.dumps(data, indent=2, ensure_ascii=False))
