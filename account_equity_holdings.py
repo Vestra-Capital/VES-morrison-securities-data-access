@@ -30,8 +30,8 @@ ENDPOINT_PATH: str = "/equityholdings/v1"
 API_URL: str = BASE_URL + ENDPOINT_PATH
 
 # Account Number for testing
-#ACCOUNT_NUMBER: Optional[str] = "115047"
-ACCOUNT_NUMBER: Optional[str] = None
+ACCOUNT_NUMBER: Optional[str] = "115047"
+#ACCOUNT_NUMBER: Optional[str] = None
 
 def _build_url(scope_item: Dict[str, Any]) -> str:
     """Build the account equity holdings API URL from a scoping item."""
@@ -47,7 +47,7 @@ def _build_url(scope_item: Dict[str, Any]) -> str:
     if account_number:
         params["accountNumber"] = account_number
     if "includeZeroHoldings" in scope_item:
-        params["includeZeroHoldings"] = "true"
+        params["includeZeroHoldings"] = "false"
 
     if params:
         query_string = "&".join(f"{k}={v}" for k, v in params.items())
@@ -103,6 +103,12 @@ def fetch_account_equity_holdings(scope_item: Dict[str, Any]) -> Dict[str, Any]:
     raise RuntimeError("Unexpected state: request completed without returning data.")
 
 
+def save_to_txt(data: Dict[str, Any], filepath: str) -> None:
+    """Save JSON data to a plain text file."""
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(json.dumps(data, indent=2, ensure_ascii=False))
+
+
 def _extract_scope_items(config: Any) -> list:
     """Extract a list of scope item dicts from the configuration API response."""
     items: list = []
@@ -125,18 +131,27 @@ if __name__ == "__main__":
     config = fetch_data()
     scope_items = _extract_scope_items(config)
 
+    output_path = "account_equity_holdings.txt"
     seen_adviser_codes = set()
-    for item in scope_items:
-        adviser_code = item.get("adviserCode")
-        if adviser_code in seen_adviser_codes:
-            continue
-        if adviser_code:
-            seen_adviser_codes.add(adviser_code)
+    with open(output_path, "w", encoding="utf-8") as out:
+        for item in scope_items:
+            adviser_code = item.get("adviserCode")
+            if adviser_code in seen_adviser_codes:
+                continue
+            if adviser_code:
+                seen_adviser_codes.add(adviser_code)
 
-        for include_zero_holdings in (True, False):
-            call_item = dict(item)
-            call_item["includeZeroHoldings"] = include_zero_holdings
+            for include_zero_holdings in (True, False):
+                call_item = dict(item)
+                call_item["includeZeroHoldings"] = include_zero_holdings
 
-            data = fetch_account_equity_holdings(call_item)
-            print(f"\n--- Result for adviserCode={adviser_code or 'N/A'} includeZeroHoldings={include_zero_holdings} ---")
-            print(_json.dumps(data, indent=2, ensure_ascii=False))
+                data = fetch_account_equity_holdings(call_item)
+                header = f"\n--- Result for adviserCode={adviser_code or 'N/A'} includeZeroHoldings={include_zero_holdings} ---\n"
+                print(header, end="")
+                print(_json.dumps(data, indent=2, ensure_ascii=False))
+
+                out.write(header)
+                out.write(_json.dumps(data, indent=2, ensure_ascii=False))
+                out.write("\n")
+
+    print(f"\nSaved consolidated output to: {output_path}")
