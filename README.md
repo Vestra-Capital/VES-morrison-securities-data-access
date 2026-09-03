@@ -36,8 +36,9 @@ graph TD
         B[trading_account_detail.py]
         C[equity_contract_notes.py]
         D[account_equity_holdings.py]
-        E[chess_registration.py]
-        F[equity_holding_transactions.py]
+        E[cash_balances.py]
+        F[chess_registration.py]
+        G[equity_holding_transactions.py]
     end
 
     subgraph Core["Core Configuration"]
@@ -50,8 +51,9 @@ graph TD
         J["/tradingaccountdetail/v1"]
         K["/equitycontractnotes/v1"]
         L["/equityholdings/v1"]
-        M["/chessregistrationdetails/v1"]
-        N["/equityholdingtransactions/v1"]
+        M["/cashbalances/v1"]
+        N["/chessregistrationdetails/v1"]
+        O["/equityholdingtransactions/v1"]
     end
 
     A --> G
@@ -60,6 +62,7 @@ graph TD
     D --> G
     E --> G
     F --> G
+    G --> G
 
     G --> H
     A --> I
@@ -68,6 +71,7 @@ graph TD
     D --> L
     E --> M
     F --> N
+    G --> O
 ```
 
 ## Request Flow
@@ -296,6 +300,55 @@ sequenceDiagram
 
 ---
 
+### Cash Balances
+
+**Module:** `cash_balances.py`
+**Endpoint:** `GET {BASE_URL}/cashbalances/v1`
+
+Retrieves cash balances for a given account scope.
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `organisationCode` | string | No | Organisation code |
+| `branchCode` | string | No | Branch code |
+| `adviserCode` | string | No | Adviser code |
+| `accountNumber` | string | No | Account number |
+
+#### Usage
+
+```python
+from cash_balances import fetch_cash_balances
+
+scope = {
+    "organisationCode": "ORG001",
+    "branchCode": "BR01",
+    "adviserCode": "ADV01",
+    "accountNumber": "115047",
+}
+
+data = fetch_cash_balances(scope)
+```
+
+#### Request Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User Code
+    participant M as cash_balances.py
+    participant API as Morrison Securities API
+
+    U->>M: fetch_cash_balances(scope_item)
+    M->>M: Validate API key
+    M->>M: Build URL with query params
+    M->>API: GET /cashbalances/v1?organisationCode=...&adviserCode=...&accountNumber=...
+    API-->>M: JSON response
+    M-->>U: Parsed dictionary
+```
+
+---
+
 ### CHESS Registration Details
 
 **Module:** `chess_registration.py`
@@ -435,6 +488,7 @@ All API functions raise `RuntimeError` when:
 ├── trading_account_detail.py            # Trading Account Detail API client
 ├── equity_contract_notes.py             # Equity Contract Notes API client
 ├── account_equity_holdings.py           # Account Equity Holdings API client
+├── cash_balances.py                     # Cash Balances API client
 ├── chess_registration.py                # CHESS Registration API client
 ├── equity_holding_transactions.py       # Equity Holding Transactions API client
 ├── requirements.txt                     # Python dependencies
