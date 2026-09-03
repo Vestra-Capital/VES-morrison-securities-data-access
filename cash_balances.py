@@ -1,8 +1,8 @@
-"""HTTP client for the Morrison Securities Account Equity Holdings API.
+"""HTTP client for the Morrison Securities Cash Balances API.
 
 Imports the shared base configuration from ``configuration`` and exposes a
-``fetch_account_equity_holdings()`` helper that performs a GET request against the
-``equityholdings/v1`` endpoint.  The module is intentionally side-effect-free
+``fetch_cash_balances()`` helper that performs a GET request against the
+``cashbalances/v1`` endpoint.  The module is intentionally side-effect-free
 on import, so it can be safely reused by tests or other Python modules.
 """
 
@@ -23,18 +23,18 @@ from configuration import (
 # Load environment variables from ``.env`` in the project root.
 load_dotenv()
 
-# API endpoint path for account equity holdings.
-ENDPOINT_PATH: str = "/equityholdings/v1"
+# API endpoint path for cash balances.
+ENDPOINT_PATH: str = "/cashbalances/v1"
 
 # Full request URL composed from shared base host and endpoint path.
 API_URL: str = BASE_URL + ENDPOINT_PATH
 
 # Account Number for testing
-ACCOUNT_NUMBER: Optional[str] = "115944"
-#ACCOUNT_NUMBER: Optional[str] = None
+ACCOUNT_NUMBER: Optional[str] = "1103050"
+
 
 def _build_url(scope_item: Dict[str, Any]) -> str:
-    """Build the account equity holdings API URL from a scoping item."""
+    """Build the cash balances API URL from a scoping item."""
     url = API_URL
     params: Dict[str, Any] = {}
     if scope_item.get("organisationCode"):
@@ -46,8 +46,6 @@ def _build_url(scope_item: Dict[str, Any]) -> str:
     account_number = scope_item.get("accountNumber", ACCOUNT_NUMBER)
     if account_number:
         params["accountNumber"] = account_number
-    if "includeZeroHoldings" in scope_item:
-        params["includeZeroHoldings"] = "false"
 
     if params:
         query_string = "&".join(f"{k}={v}" for k, v in params.items())
@@ -56,13 +54,13 @@ def _build_url(scope_item: Dict[str, Any]) -> str:
     return url
 
 
-def fetch_account_equity_holdings(scope_item: Dict[str, Any]) -> Dict[str, Any]:
-    """Fetch account equity holdings from the Morrison Securities API.
+def fetch_cash_balances(scope_item: Dict[str, Any]) -> Dict[str, Any]:
+    """Fetch cash balances from the Morrison Securities API.
 
     Args:
         scope_item: Dictionary containing scoping parameters such as
             ``organisationCode``, ``branchCode``, ``adviserCode``,
-            ``accountNumber``, and ``includeZeroHoldings``.
+            and ``accountNumber``.
 
     Returns:
         Parsed JSON response as a dictionary.
@@ -131,7 +129,7 @@ if __name__ == "__main__":
     config = fetch_data()
     scope_items = _extract_scope_items(config)
 
-    output_path = "account_equity_holdings.txt"
+    output_path = "cash_balances.txt"
     seen_adviser_codes = set()
     with open(output_path, "w", encoding="utf-8") as out:
         for item in scope_items:
@@ -141,17 +139,13 @@ if __name__ == "__main__":
             if adviser_code:
                 seen_adviser_codes.add(adviser_code)
 
-            for include_zero_holdings in (True, False):
-                call_item = dict(item)
-                call_item["includeZeroHoldings"] = include_zero_holdings
+            data = fetch_cash_balances(item)
+            header = f"\n--- Result for adviserCode={adviser_code or 'N/A'} ---\n"
+            print(header, end="")
+            print(_json.dumps(data, indent=2, ensure_ascii=False))
 
-                data = fetch_account_equity_holdings(call_item)
-                header = f"\n--- Result for adviserCode={adviser_code or 'N/A'} includeZeroHoldings={include_zero_holdings} ---\n"
-                print(header, end="")
-                print(_json.dumps(data, indent=2, ensure_ascii=False))
-
-                out.write(header)
-                out.write(_json.dumps(data, indent=2, ensure_ascii=False))
-                out.write("\n")
+            out.write(header)
+            out.write(_json.dumps(data, indent=2, ensure_ascii=False))
+            out.write("\n")
 
     print(f"\nSaved consolidated output to: {output_path}")
