@@ -39,39 +39,43 @@ graph TD
         E[cash_balances.py]
         F[chess_registration.py]
         G[equity_holding_transactions.py]
+        H[account_cash_ledgers.py]
     end
 
     subgraph Core["Core Configuration"]
-        G[configuration.py]
+        I[configuration.py]
     end
 
     subgraph API["Morrison Securities API"]
-        H["/dataaccess/v1"]
-        I["/tradingaccounts/v2"]
-        J["/tradingaccountdetail/v1"]
-        K["/equitycontractnotes/v1"]
-        L["/equityholdings/v1"]
-        M["/cashbalances/v1"]
-        N["/chessregistrationdetails/v1"]
-        O["/equityholdingtransactions/v1"]
+        J["/dataaccess/v1"]
+        K["/tradingaccounts/v2"]
+        L["/tradingaccountdetail/v1"]
+        M["/equitycontractnotes/v1"]
+        N["/equityholdings/v1"]
+        O["/cashbalances/v1"]
+        P["/chessregistrationdetails/v1"]
+        Q["/equityholdingtransactions/v1"]
+        R["/accountcashledgers/v1"]
     end
 
-    A --> G
-    B --> G
-    C --> G
-    D --> G
-    E --> G
-    F --> G
-    G --> G
-
-    G --> H
     A --> I
-    B --> J
-    C --> K
-    D --> L
-    E --> M
-    F --> N
-    G --> O
+    B --> I
+    C --> I
+    D --> I
+    E --> I
+    F --> I
+    G --> I
+    H --> I
+
+    I --> J
+    A --> K
+    B --> L
+    C --> M
+    D --> N
+    E --> O
+    F --> P
+    G --> Q
+    H --> R
 ```
 
 ## Request Flow
@@ -349,6 +353,55 @@ sequenceDiagram
 
 ---
 
+### Account Cash Ledgers
+
+**Module:** `account_cash_ledgers.py`
+**Endpoint:** `GET {BASE_URL}/accountcashledgers/v1`
+
+Retrieves cash ledger entries for a given account scope.
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `organisationCode` | string | No | Organisation code |
+| `branchCode` | string | No | Branch code |
+| `adviserCode` | string | No | Adviser code |
+| `accountNumber` | string | No | Account number (default: `1103050`) |
+
+#### Usage
+
+```python
+from account_cash_ledgers import fetch_account_cash_ledgers
+
+scope = {
+    "organisationCode": "ORG001",
+    "branchCode": "BR01",
+    "adviserCode": "ADV01",
+    "accountNumber": "1103050",
+}
+
+data = fetch_account_cash_ledgers(scope)
+```
+
+#### Request Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User Code
+    participant M as account_cash_ledgers.py
+    participant API as Morrison Securities API
+
+    U->>M: fetch_account_cash_ledgers(scope_item)
+    M->>M: Validate API key
+    M->>M: Build URL with query params
+    M->>API: GET /accountcashledgers/v1?organisationCode=...&adviserCode=...&accountNumber=...
+    API-->>M: JSON response
+    M-->>U: Parsed dictionary
+```
+
+---
+
 ### CHESS Registration Details
 
 **Module:** `chess_registration.py`
@@ -490,6 +543,7 @@ All API functions raise `RuntimeError` when:
 ├── account_equity_holdings.py           # Account Equity Holdings API client
 ├── cash_balances.py                     # Cash Balances API client
 ├── chess_registration.py                # CHESS Registration API client
+├── account_cash_ledgers.py              # Account Cash Ledgers API client
 ├── equity_holding_transactions.py       # Equity Holding Transactions API client
 ├── requirements.txt                     # Python dependencies
 ├── .env                                 # Environment variables (git-ignored)
