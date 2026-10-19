@@ -30,7 +30,7 @@ ENDPOINT_PATH: str = "/equitycontractnotes/v1"
 API_URL: str = BASE_URL + ENDPOINT_PATH
 
 # Account Number for testing
-ACCOUNT_NUMBER: str = "115047"
+ACCOUNT_NUMBER: str = "1102834"
 
 
 def _build_url(scope_item: Dict[str, Any]) -> str:
@@ -101,6 +101,12 @@ def fetch_equity_contract_notes(scope_item: Dict[str, Any]) -> Dict[str, Any]:
     raise RuntimeError("Unexpected state: request completed without returning data.")
 
 
+def save_to_txt(data: Dict[str, Any], filepath: str) -> None:
+    """Save JSON data to a plain text file."""
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(json.dumps(data, indent=2, ensure_ascii=False))
+
+
 def _extract_scope_items(config: Any) -> list:
     """Extract a list of scope item dicts from the configuration API response."""
     items: list = []
@@ -123,14 +129,23 @@ if __name__ == "__main__":
     config = fetch_data()
     scope_items = _extract_scope_items(config)
 
+    output_path = "equity_contract_notes.txt"
     seen_adviser_codes = set()
-    for item in scope_items:
-        adviser_code = item.get("adviserCode")
-        if adviser_code in seen_adviser_codes:
-            continue
-        if adviser_code:
-            seen_adviser_codes.add(adviser_code)
+    with open(output_path, "w", encoding="utf-8") as out:
+        for item in scope_items:
+            adviser_code = item.get("adviserCode")
+            if adviser_code in seen_adviser_codes:
+                continue
+            if adviser_code:
+                seen_adviser_codes.add(adviser_code)
 
-        data = fetch_equity_contract_notes(item)
-        print(f"\n--- Result for adviserCode={adviser_code or 'N/A'} ---")
-        print(_json.dumps(data, indent=2, ensure_ascii=False))
+            data = fetch_equity_contract_notes(item)
+            header = f"\n--- Result for adviserCode={adviser_code or 'N/A'} ---\n"
+            print(header, end="")
+            print(_json.dumps(data, indent=2, ensure_ascii=False))
+
+            out.write(header)
+            out.write(_json.dumps(data, indent=2, ensure_ascii=False))
+            out.write("\n")
+
+    print(f"\nSaved consolidated output to: {output_path}")

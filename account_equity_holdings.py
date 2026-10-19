@@ -30,7 +30,7 @@ ENDPOINT_PATH: str = "/equityholdings/v1"
 API_URL: str = BASE_URL + ENDPOINT_PATH
 
 # Account Number for testing
-ACCOUNT_NUMBER: Optional[str] = "115944"
+ACCOUNT_NUMBER: Optional[str] = "1102736"
 #ACCOUNT_NUMBER: Optional[str] = None
 
 def _build_url(scope_item: Dict[str, Any]) -> str:

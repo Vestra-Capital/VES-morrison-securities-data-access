@@ -21,7 +21,7 @@ from configuration import (
 )
 
 # Account Number for testing
-ACCOUNT_NUMBER: str = "115047"
+ACCOUNT_NUMBER: str = "1102834"
 
 # Load environment variables from ``.env`` in the project root.
 load_dotenv()
@@ -125,14 +125,23 @@ if __name__ == "__main__":
     config = fetch_data()
     scope_items = _extract_scope_items(config)
 
+    output_path = "equity_holding_transactions.txt"
     seen_adviser_codes = set()
-    for item in scope_items:
-        adviser_code = item.get("adviserCode")
-        if adviser_code in seen_adviser_codes:
-            continue
-        if adviser_code:
-            seen_adviser_codes.add(adviser_code)
+    with open(output_path, "w", encoding="utf-8") as out:
+        for item in scope_items:
+            adviser_code = item.get("adviserCode")
+            if adviser_code in seen_adviser_codes:
+                continue
+            if adviser_code:
+                seen_adviser_codes.add(adviser_code)
 
-        data = fetch_equity_holding_transactions(item)
-        print(f"\n--- Result for adviserCode={adviser_code or 'N/A'} ---")
-        print(_json.dumps(data, indent=2, ensure_ascii=False))
+            data = fetch_equity_holding_transactions(item)
+            header = f"\n--- Result for adviserCode={adviser_code or 'N/A'} ---\n"
+            print(header, end="")
+            print(_json.dumps(data, indent=2, ensure_ascii=False))
+
+            out.write(header)
+            out.write(_json.dumps(data, indent=2, ensure_ascii=False))
+            out.write("\n")
+
+    print(f"\nSaved consolidated output to: {output_path}")
